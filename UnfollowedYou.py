@@ -126,13 +126,23 @@ def _create_driver(browser: str):
         raise RuntimeError(f'{_BROWSER_HELP[browser]}\n\nOriginal error: {e}') from e
 
 
+# URL fragments that indicate Instagram hasn't finished the auth flow yet.
+_STILL_AUTHING = (
+    '/accounts/login',
+    '/challenge/',
+    '/two_factor',
+    '/accounts/onetap/',
+    '/accounts/suspended/',
+    '/captcha/',
+)
+
+
 def _wait_for_login(driver):
     WebDriverWait(driver, LOGIN_TIMEOUT).until(
         lambda d: (
-            '/accounts/login' not in d.current_url
-            and '/challenge/' not in d.current_url
-            and '/two_factor' not in d.current_url
-            and d.current_url != 'data:,'
+            d.current_url not in ('data:,', 'about:blank', '')
+            and 'instagram.com' in d.current_url
+            and not any(p in d.current_url for p in _STILL_AUTHING)
         )
     )
 
@@ -289,7 +299,7 @@ class App(ctk.CTk):
             driver = _create_driver(browser)
             driver.get('https://www.instagram.com/accounts/login')
 
-            self._set_status('Waiting for you to log in...', 'orange')
+            self._set_status('Waiting for login — solve any captcha or 2FA in the browser...', 'orange')
             _wait_for_login(driver)
             _dismiss_dialogs(driver)
             self._set_progress(0.1)
