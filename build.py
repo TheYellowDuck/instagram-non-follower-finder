@@ -40,12 +40,8 @@ def main():
         '--add-data', f'{ctk_path}{sep}customtkinter',
         # webdriver_manager sub-modules are imported dynamically; list them explicitly
         # so PyInstaller bundles them.
-        '--hidden-import', 'webdriver_manager.chrome',
-        '--hidden-import', 'webdriver_manager.firefox',
-        '--hidden-import', 'webdriver_manager.microsoft',
-        '--hidden-import', 'selenium.webdriver.chrome.service',
-        '--hidden-import', 'selenium.webdriver.firefox.service',
-        '--hidden-import', 'selenium.webdriver.edge.service',
+        '--collect-all', 'selenium',
+        '--collect-all', 'webdriver_manager',
         'UnfollowedYou.py',
     ]
 
