@@ -7,7 +7,8 @@ Built with Python, Selenium WebDriver, and CustomTkinter. Uses browser automatio
 ## Features
 
 - Cross-browser — Chrome, Firefox, Edge, Safari
-- Manual login flow with full 2FA support
+- Stealth mode — bypasses Instagram's bot detection on all browsers
+- Manual login flow with full 2FA and captcha support
 - Auto-downloads browser drivers (no PATH setup required)
 - Accumulates users across virtual-scroll batches so no one is missed
 - Results copyable to clipboard
@@ -27,5 +28,6 @@ The app is output to `dist/`. On macOS, right-click → Open the first time to b
 ## Tech Stack
 
 - **Python** — Selenium WebDriver, CustomTkinter, threading
+- **undetected-chromedriver** — stealth Chrome driver that bypasses bot detection
 - **PyInstaller** — packaged into a native clickable app
 - **webdriver-manager** — automatic driver management for Firefox & Edge
