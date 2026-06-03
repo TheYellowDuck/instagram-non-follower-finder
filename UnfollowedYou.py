@@ -137,14 +137,25 @@ _STILL_AUTHING = (
 )
 
 
-def _wait_for_login(driver):
-    WebDriverWait(driver, LOGIN_TIMEOUT).until(
-        lambda d: (
-            d.current_url not in ('data:,', 'about:blank', '')
-            and 'instagram.com' in d.current_url
-            and not any(p in d.current_url for p in _STILL_AUTHING)
-        )
-    )
+def _wait_for_login(driver, on_status=None):
+    """Poll until login completes, updating the status label so the user
+    knows what to do at each step (login form, captcha, 2FA, etc.)."""
+    deadline = time.time() + LOGIN_TIMEOUT
+    while time.time() < deadline:
+        url = driver.current_url
+        if 'instagram.com' not in url or url in ('data:,', 'about:blank', ''):
+            time.sleep(0.5)
+            continue
+        if '/accounts/login' in url:
+            if on_status:
+                on_status('Enter your Instagram credentials — then solve any captcha if prompted...', 'orange')
+        elif any(p in url for p in _STILL_AUTHING):
+            if on_status:
+                on_status('Complete the verification in the browser...', 'orange')
+        else:
+            return  # Landed on a non-auth page — login complete
+        time.sleep(0.5)
+    raise TimeoutError('Login timed out — please try again.')
 
 
 def _dismiss_dialogs(driver):
@@ -299,8 +310,8 @@ class App(ctk.CTk):
             driver = _create_driver(browser)
             driver.get('https://www.instagram.com/accounts/login')
 
-            self._set_status('Waiting for login — solve any captcha or 2FA in the browser...', 'orange')
-            _wait_for_login(driver)
+            self._set_status('Enter your Instagram credentials in the browser...', 'orange')
+            _wait_for_login(driver, on_status=self._set_status)
             _dismiss_dialogs(driver)
 
             # Verify session by checking for the sessionid cookie — Instagram
