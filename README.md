@@ -2,7 +2,7 @@
 
 A desktop app that automates finding Instagram accounts you follow that don't follow you back.
 
-[![Demo](https://img.youtube.com/vi/CibVM3FueDY/0.jpg)](https://youtu.be/CibVM3FueDY)
+[![Demo](thumbnail.jpg)](https://youtu.be/CibVM3FueDY)
 
 Built with Python, Selenium WebDriver, and CustomTkinter. Uses browser automation to scroll and extract follower/following lists, with a clean dark-mode GUI and cross-browser support.
 
