@@ -148,12 +148,17 @@ def _wait_for_login(driver, on_status=None):
             continue
         if '/accounts/login' in url:
             if on_status:
-                on_status('Enter your Instagram credentials — then solve any captcha if prompted...', 'orange')
+                on_status('Enter your Instagram credentials — solve any captcha if prompted...', 'orange')
         elif any(p in url for p in _STILL_AUTHING):
             if on_status:
                 on_status('Complete the verification in the browser...', 'orange')
         else:
-            return  # Landed on a non-auth page — login complete
+            # URL looks good — confirm the session cookie is actually set.
+            # Instagram can land on a non-auth URL before the cookie is written.
+            if any(c['name'] == 'sessionid' for c in driver.get_cookies()):
+                return
+            if on_status:
+                on_status('Completing login...', 'orange')
         time.sleep(0.5)
     raise TimeoutError('Login timed out — please try again.')
 
@@ -314,13 +319,6 @@ class App(ctk.CTk):
             _wait_for_login(driver, on_status=self._set_status)
             _dismiss_dialogs(driver)
 
-            # Verify session by checking for the sessionid cookie — Instagram
-            # only sets this when genuinely authenticated, no extra navigation needed.
-            if not any(c['name'] == 'sessionid' for c in driver.get_cookies()):
-                raise RuntimeError(
-                    'Login did not complete — no active session detected.\n'
-                    'Please log in fully (including solving any captcha) and try again.'
-                )
             self._set_progress(0.1)
 
             self._set_status('Loading profile...')
