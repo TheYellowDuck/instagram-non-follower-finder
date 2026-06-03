@@ -104,22 +104,41 @@ _BROWSER_HELP = {
 }
 
 
+_STEALTH_SCRIPT = (
+    "Object.defineProperty(navigator,'webdriver',{get:()=>undefined});"
+)
+
+
 def _create_driver(browser: str):
     if browser not in _BROWSER_HELP:
         raise ValueError(f'Unknown browser: {browser}')
     try:
         match browser:
             case 'Chrome':
-                # Selenium 4.6+ includes Selenium Manager which handles ChromeDriver automatically.
-                return webdriver.Chrome()
+                import undetected_chromedriver as uc
+                return uc.Chrome()
             case 'Firefox':
                 from selenium.webdriver.firefox.service import Service
                 from webdriver_manager.firefox import GeckoDriverManager
-                return webdriver.Firefox(service=Service(GeckoDriverManager().install()))
+                opts = webdriver.FirefoxOptions()
+                opts.set_preference('dom.webdriver.enabled', False)
+                opts.set_preference('useAutomationExtension', False)
+                driver = webdriver.Firefox(
+                    service=Service(GeckoDriverManager().install()), options=opts)
+                driver.execute_script(_STEALTH_SCRIPT)
+                return driver
             case 'Edge':
                 from selenium.webdriver.edge.service import Service
                 from webdriver_manager.microsoft import EdgeChromiumDriverManager
-                return webdriver.Edge(service=Service(EdgeChromiumDriverManager().install()))
+                opts = webdriver.EdgeOptions()
+                opts.add_argument('--disable-blink-features=AutomationControlled')
+                opts.add_experimental_option('excludeSwitches', ['enable-automation'])
+                opts.add_experimental_option('useAutomationExtension', False)
+                driver = webdriver.Edge(
+                    service=Service(EdgeChromiumDriverManager().install()), options=opts)
+                driver.execute_cdp_cmd('Page.addScriptToEvaluateOnNewDocument',
+                                       {'source': _STEALTH_SCRIPT})
+                return driver
             case 'Safari':
                 return webdriver.Safari()
     except Exception as e:
