@@ -1,7 +1,4 @@
 import os
-import platform
-import re
-import subprocess
 import threading
 import time
 import traceback
@@ -112,30 +109,6 @@ _STEALTH_SCRIPT = (
 )
 
 
-def _chrome_major_version() -> int | None:
-    """Return the installed Chrome major version, or None if undetectable."""
-    try:
-        sys = platform.system()
-        if sys == 'Darwin':
-            out = subprocess.check_output(
-                ['/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-                 '--version'], text=True, stderr=subprocess.DEVNULL)
-        elif sys == 'Windows':
-            import winreg
-            key = winreg.OpenKey(
-                winreg.HKEY_LOCAL_MACHINE,
-                r'SOFTWARE\Google\Chrome\BLBeacon')
-            ver, _ = winreg.QueryValueEx(key, 'version')
-            return int(ver.split('.')[0])
-        else:
-            out = subprocess.check_output(
-                ['google-chrome', '--version'], text=True,
-                stderr=subprocess.DEVNULL)
-        m = re.search(r'(\d+)\.', out)
-        return int(m.group(1)) if m else None
-    except Exception:
-        return None
-
 
 def _create_driver(browser: str):
     if browser not in _BROWSER_HELP:
@@ -143,8 +116,14 @@ def _create_driver(browser: str):
     try:
         match browser:
             case 'Chrome':
-                import undetected_chromedriver as uc
-                return uc.Chrome(version_main=_chrome_major_version())
+                opts = webdriver.ChromeOptions()
+                opts.add_argument('--disable-blink-features=AutomationControlled')
+                opts.add_experimental_option('excludeSwitches', ['enable-automation'])
+                opts.add_experimental_option('useAutomationExtension', False)
+                driver = webdriver.Chrome(options=opts)
+                driver.execute_cdp_cmd('Page.addScriptToEvaluateOnNewDocument',
+                                       {'source': _STEALTH_SCRIPT})
+                return driver
             case 'Firefox':
                 from selenium.webdriver.firefox.service import Service
                 from webdriver_manager.firefox import GeckoDriverManager

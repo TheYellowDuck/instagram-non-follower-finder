@@ -42,7 +42,6 @@ def main():
         # so PyInstaller bundles them.
         '--collect-all', 'selenium',
         '--collect-all', 'webdriver_manager',
-        '--collect-all', 'undetected_chromedriver',
         'UnfollowedYou.py',
     ]
 
