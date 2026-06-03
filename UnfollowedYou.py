@@ -303,14 +303,11 @@ class App(ctk.CTk):
             _wait_for_login(driver)
             _dismiss_dialogs(driver)
 
-            # Verify the session is genuinely authenticated. Navigating to
-            # /accounts/edit/ redirects to the login page if not logged in.
-            self._set_status('Verifying login...')
-            driver.get('https://www.instagram.com/accounts/edit/')
-            time.sleep(2)
-            if any(p in driver.current_url for p in _STILL_AUTHING):
+            # Verify session by checking for the sessionid cookie — Instagram
+            # only sets this when genuinely authenticated, no extra navigation needed.
+            if not any(c['name'] == 'sessionid' for c in driver.get_cookies()):
                 raise RuntimeError(
-                    'Login did not complete — Instagram redirected back to the login page.\n'
+                    'Login did not complete — no active session detected.\n'
                     'Please log in fully (including solving any captcha) and try again.'
                 )
             self._set_progress(0.1)
